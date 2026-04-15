@@ -2,6 +2,7 @@ const menuToggle = document.getElementById("mobile-menu-toggle");
 const navMenu = document.getElementById("nav-menu");
 const navLinks = document.querySelectorAll(".nav-link");
 const revealTargets = document.querySelectorAll(".reveal");
+const gallerySlider = document.querySelector("[data-gallery-slider]");
 
 if (menuToggle && navMenu) {
   menuToggle.addEventListener("click", () => {
@@ -40,4 +41,61 @@ if ("IntersectionObserver" in window) {
   revealTargets.forEach((target) => observer.observe(target));
 } else {
   revealTargets.forEach((target) => target.classList.add("is-visible"));
+}
+
+if (gallerySlider) {
+  const track = gallerySlider.querySelector("[data-gallery-track]");
+  const slides = Array.from(gallerySlider.querySelectorAll(".gallery-slide"));
+  const prevButton = gallerySlider.querySelector("[data-gallery-prev]");
+  const nextButton = gallerySlider.querySelector("[data-gallery-next]");
+  const dots = Array.from(gallerySlider.querySelectorAll(".gallery-dot"));
+  let currentIndex = 0;
+
+  const getSlidesPerView = () => {
+    if (window.innerWidth <= 780) return 1;
+    if (window.innerWidth <= 1024) return 2;
+    return 3;
+  };
+
+  const getMaxIndex = () => Math.max(0, slides.length - getSlidesPerView());
+
+  const updateGallery = () => {
+    const slideWidth = slides[0]?.getBoundingClientRect().width ?? 0;
+    const gap = 18;
+    const offset = currentIndex * (slideWidth + gap);
+    track.style.transform = `translateX(-${offset}px)`;
+
+    dots.forEach((dot, index) => {
+      const active = index === currentIndex;
+      dot.classList.toggle("is-active", active);
+      dot.setAttribute("aria-current", active ? "true" : "false");
+    });
+
+    if (prevButton) prevButton.disabled = currentIndex === 0;
+    if (nextButton) nextButton.disabled = currentIndex >= getMaxIndex();
+  };
+
+  prevButton?.addEventListener("click", () => {
+    currentIndex = Math.max(0, currentIndex - 1);
+    updateGallery();
+  });
+
+  nextButton?.addEventListener("click", () => {
+    currentIndex = Math.min(getMaxIndex(), currentIndex + 1);
+    updateGallery();
+  });
+
+  dots.forEach((dot, index) => {
+    dot.addEventListener("click", () => {
+      currentIndex = Math.min(index, getMaxIndex());
+      updateGallery();
+    });
+  });
+
+  window.addEventListener("resize", () => {
+    currentIndex = Math.min(currentIndex, getMaxIndex());
+    updateGallery();
+  });
+
+  updateGallery();
 }
